@@ -8,6 +8,7 @@ use rand::distributions::Standard;
 use rand::Rng;
 
 use crate::map_generation::generators::*;
+use crate::sprite_atlas::SpriteIndex;
 
 #[derive(PartialEq, Debug)]
 pub enum CardinalDirection {
@@ -28,6 +29,13 @@ impl Distribution<CardinalDirection> for Standard {
     }
 }
 
+#[derive(Clone)]
+pub enum ViewStatus {
+    Seen,
+    Revealed,
+    Unexplored,
+}
+
 //chebyshev distance
 fn distance(p0: (usize, usize), p1: (usize, usize)) -> usize {
     std::cmp::max(p0.0.abs_diff(p1.0), p0.1.abs_diff(p1.1))
@@ -37,6 +45,7 @@ fn distance(p0: (usize, usize), p1: (usize, usize)) -> usize {
 pub struct Tile {
     pub sprite_index: usize,
     pub passable: bool,
+    pub view_status: ViewStatus,
 }
 
 impl Default for Tile {
@@ -44,6 +53,7 @@ impl Default for Tile {
         Tile {
             sprite_index: 206,
             passable: false,
+            view_status: ViewStatus::Unexplored,
         }
     }
 }
@@ -53,6 +63,7 @@ pub struct Map {
     grid: Vec<Vec<Tile>>,
     pub width: usize,
     pub height: usize,
+    pub start: (usize, usize),
 }
 
 impl Map {
@@ -64,6 +75,7 @@ impl Map {
             grid: vec![vec![Tile::default(); Self::WIDTH]; Self::HEIGHT],
             width: Self::WIDTH,
             height: Self::HEIGHT,
+            start: (Self::WIDTH / 2, Self::HEIGHT / 2)
         };
         map.generate(settings);
         map
@@ -302,7 +314,7 @@ impl Map {
         }
     }
 
-    fn get_mut(&mut self, (x, y): (usize, usize)) -> Option<&mut Tile> {
+    pub fn get_mut(&mut self, (x, y): (usize, usize)) -> Option<&mut Tile> {
         if let Some(row) = self.grid.get_mut(y) {
             row.get_mut(x)
         } else {

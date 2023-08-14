@@ -5,6 +5,8 @@ use bevy::prelude::*;
 
 use crate::sprite_atlas::SpriteAtlas;
 
+use self::map::{ViewStatus, Map};
+
 #[derive(Component)]
 pub struct MapTile;
 
@@ -12,7 +14,20 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, display_map.run_if(resource_changed::<map::Map>()));
+        app.add_systems(Update, (display_map.run_if(resource_added::<map::Map>()), update_fov));
+    }
+}
+
+fn update_fov(map: Res<Map>, mut query: Query<(&mut TextureAtlasSprite, &Transform), With<MapTile>>) {
+    for (mut sprite, transform) in query.iter_mut() {
+        let x = transform.translation.x as usize / 12;
+        let y = transform.translation.y as usize / 12;
+        sprite.color = match map.get((x, y)).unwrap().view_status {
+            ViewStatus::Seen => Color::WHITE,
+            ViewStatus::Revealed => Color::BLUE,
+            ViewStatus::Unexplored => Color::GRAY,
+        };
+        
     }
 }
 

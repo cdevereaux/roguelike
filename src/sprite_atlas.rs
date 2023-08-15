@@ -33,7 +33,6 @@ fn setup(
     });
 }
 
-
 pub enum SpriteIndex {
     Player = 1648,
 }

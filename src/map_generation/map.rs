@@ -8,7 +8,6 @@ use rand::distributions::Standard;
 use rand::Rng;
 
 use crate::map_generation::generators::*;
-use crate::sprite_atlas::SpriteIndex;
 
 #[derive(PartialEq, Debug)]
 pub enum CardinalDirection {
@@ -75,7 +74,7 @@ impl Map {
             grid: vec![vec![Tile::default(); Self::WIDTH]; Self::HEIGHT],
             width: Self::WIDTH,
             height: Self::HEIGHT,
-            start: (Self::WIDTH / 2, Self::HEIGHT / 2)
+            start: (Self::WIDTH / 2, Self::HEIGHT / 2),
         };
         map.generate(settings);
         map

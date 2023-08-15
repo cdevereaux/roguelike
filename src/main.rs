@@ -1,7 +1,11 @@
 use bevy::prelude::*;
-use mystery_dungeon::{camera_controls::{CameraControlsPlugin, MainCamera}, map_generation::{MapPlugin, generators::MapGeneratorSettings, map::Map}, sprite_atlas::SpriteAtlasPlugin, actor::ActorPlugin, fov::FovPlugin};
-
-
+use mystery_dungeon::{
+    actor::ActorPlugin,
+    camera_controls::{CameraControlsPlugin, MainCamera},
+    fov::FovPlugin,
+    map_generation::{generators::MapGeneratorSettings, map::Map, MapPlugin},
+    sprite_atlas::SpriteAtlasPlugin,
+};
 
 fn main() {
     App::new()

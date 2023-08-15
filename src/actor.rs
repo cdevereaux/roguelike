@@ -1,13 +1,16 @@
 use bevy::prelude::*;
 
-use crate::{sprite_atlas::{SpriteAtlas, SpriteIndex}, map_generation::map::Map};
+use crate::{
+    map_generation::map::Map,
+    sprite_atlas::{SpriteAtlas, SpriteIndex},
+};
 
 pub struct ActorPlugin;
 
 impl Plugin for ActorPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, spawn_player)
-        .add_systems(Update, player_movement);
+            .add_systems(Update, player_movement);
     }
 }
 
@@ -16,8 +19,7 @@ pub struct Player;
 
 #[derive(Component)]
 pub struct Actor {
-    health: f32,
-
+    _health: f32,
 }
 
 // fn center_camera(
@@ -52,9 +54,11 @@ fn player_movement(
 
     if delta != [0, 0] {
         let mut player_transform = player_query.get_single_mut().unwrap();
-        let new_index_vec: Vec<usize> = (0..2).map(|i| {
-            (player_transform.translation[i] as usize / 12).saturating_add_signed(delta[i])
-        }).collect();
+        let new_index_vec: Vec<usize> = (0..2)
+            .map(|i| {
+                (player_transform.translation[i] as usize / 12).saturating_add_signed(delta[i])
+            })
+            .collect();
         let new_index = (new_index_vec[0], new_index_vec[1]);
         if let Some(tile) = map.get(new_index) {
             if tile.passable {
@@ -64,9 +68,7 @@ fn player_movement(
                 eprintln!("Player Translation: {:?}", player_transform.translation);
             }
         }
-        
     }
-
 }
 
 fn spawn_player(mut commands: Commands, atlas: Res<SpriteAtlas>, map: Res<Map>) {
@@ -76,14 +78,13 @@ fn spawn_player(mut commands: Commands, atlas: Res<SpriteAtlas>, map: Res<Map>) 
             texture_atlas: atlas.handle.clone(),
             sprite: TextureAtlasSprite::new(SpriteIndex::Player as usize),
             transform: Transform {
-                translation: Vec3::new(map.start.0 as f32, map.start.1 as f32, 1.0) * Vec3::splat(12.0),
+                translation: Vec3::new(map.start.0 as f32, map.start.1 as f32, 1.0)
+                    * Vec3::splat(12.0),
                 ..Default::default()
             },
             ..Default::default()
         },
-        Actor {
-            health: 100.,
-        },
+        Actor { _health: 100. },
         Player,
     ));
 }

@@ -3,13 +3,13 @@ use mystery_dungeon::{
     actor::ActorPlugin,
     camera_controls::{CameraControlsPlugin, MainCamera},
     fov::FovPlugin,
-    map_generation::{generators::MapGeneratorSettings, map::Map, MapPlugin},
+    level_generation::{generators::MapGeneratorSettings, map::Map, MapPlugin},
     sprite_atlas::SpriteAtlasPlugin,
 };
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()).set(WindowPlugin{ primary_window: Some(Window {fit_canvas_to_parent: true, ..Default::default()}), ..Default::default()}))
         .add_plugins((
             SpriteAtlasPlugin,
             CameraControlsPlugin,

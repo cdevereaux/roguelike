@@ -7,7 +7,7 @@ use rand::distributions::Distribution;
 use rand::distributions::Standard;
 use rand::Rng;
 
-use crate::map_generation::generators::*;
+use crate::level_generation::generators::*;
 
 #[derive(PartialEq, Debug)]
 pub enum CardinalDirection {

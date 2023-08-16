@@ -35,4 +35,5 @@ fn setup(
 
 pub enum SpriteIndex {
     Player = 1648,
+    Bat = 1862,
 }

@@ -1,6 +1,6 @@
 use crate::{
     actor::Player,
-    map_generation::{
+    level_generation::{
         map::{Map, ViewStatus},
         MapTile,
     },

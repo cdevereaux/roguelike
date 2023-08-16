@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    map_generation::map::Map,
+    level_generation::map::Map,
     sprite_atlas::{SpriteAtlas, SpriteIndex},
 };
 
@@ -10,7 +10,7 @@ pub struct ActorPlugin;
 impl Plugin for ActorPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, spawn_player)
-            .add_systems(Update, player_movement);
+            .add_systems(Update, (player_movement, center_camera).chain());
     }
 }
 
@@ -18,23 +18,34 @@ impl Plugin for ActorPlugin {
 pub struct Player;
 
 #[derive(Component)]
+pub struct Enemy;
+
+#[derive(Component)]
 pub struct Actor {
     _health: f32,
 }
 
-// fn center_camera(
-//     player_query: Query<&Transform, With<Player>>,
-//     mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera>)>,
-// ) {
-//     let player_transform = player_query.single();
-//     let mut camera_transform = camera_query.single_mut();
+#[derive(Component)]
+pub struct CanMove {just_moved: bool}
 
-//     camera_transform.translation.x = player_transform.translation.x;
-//     camera_transform.translation.y = player_transform.translation.y;
-// }
+
+fn center_camera(
+    mut player_query: Query<(&mut CanMove, &Transform), (With<Player>, Changed<CanMove>)>,
+    mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera>)>,
+) {
+    if let Ok((mut player_movement, player_transform)) = player_query.get_single_mut() {
+        if player_movement.just_moved {
+            let mut camera_transform = camera_query.single_mut();
+            camera_transform.translation.x = player_transform.translation.x;
+            camera_transform.translation.y = player_transform.translation.y;
+            player_movement.just_moved = false;
+        }
+    }
+}
 
 fn player_movement(
-    mut player_query: Query<&mut Transform, With<Player>>,
+    mut commands: Commands,
+    mut player_query: Query<(&mut CanMove, &mut Transform), With<Player>>,
     map: Res<Map>,
     keyboard: Res<Input<KeyCode>>,
 ) {
@@ -53,7 +64,7 @@ fn player_movement(
     }
 
     if delta != [0, 0] {
-        let mut player_transform = player_query.get_single_mut().unwrap();
+        let (mut player_movement, mut player_transform) = player_query.get_single_mut().unwrap();
         let new_index_vec: Vec<usize> = (0..2)
             .map(|i| {
                 (player_transform.translation[i] as usize / 12).saturating_add_signed(delta[i])
@@ -66,6 +77,7 @@ fn player_movement(
                 player_transform.translation.y += delta[1] as f32 * 12.0;
                 eprintln!("Player Moved: ({:?}, {:?})", delta[0], delta[1]);
                 eprintln!("Player Translation: {:?}", player_transform.translation);
+                player_movement.just_moved = true;
             }
         }
     }
@@ -86,5 +98,6 @@ fn spawn_player(mut commands: Commands, atlas: Res<SpriteAtlas>, map: Res<Map>) 
         },
         Actor { _health: 100. },
         Player,
+        CanMove{just_moved: false}
     ));
 }

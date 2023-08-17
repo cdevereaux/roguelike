@@ -9,7 +9,7 @@ pub struct ActorPlugin;
 
 impl Plugin for ActorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PostStartup, spawn_player)
+        app.add_systems(PostStartup, (spawn_player, spawn_enemies))
             .add_systems(Update, (player_movement, center_camera).chain());
     }
 }
@@ -26,13 +26,13 @@ pub struct Actor {
 }
 
 #[derive(Component)]
-pub struct CanMove {
+pub struct Movement {
     just_moved: bool,
 }
 
 #[allow(clippy::type_complexity)]
 fn center_camera(
-    mut player_query: Query<(&mut CanMove, &Transform), (With<Player>, Changed<CanMove>)>,
+    mut player_query: Query<(&mut Movement, &Transform), (With<Player>, Changed<Movement>)>,
     mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera>)>,
 ) {
     if let Ok((mut player_movement, player_transform)) = player_query.get_single_mut() {
@@ -46,7 +46,7 @@ fn center_camera(
 }
 
 fn player_movement(
-    mut player_query: Query<(&mut CanMove, &mut Transform), With<Player>>,
+    mut player_query: Query<(&mut Movement, &mut Transform), With<Player>>,
     map: Res<Map>,
     keyboard: Res<Input<KeyCode>>,
 ) {
@@ -84,20 +84,41 @@ fn player_movement(
 }
 
 fn spawn_player(mut commands: Commands, atlas: Res<SpriteAtlas>, map: Res<Map>) {
-    eprintln!("Player Created!");
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: atlas.handle.clone(),
             sprite: TextureAtlasSprite::new(SpriteIndex::Player as usize),
             transform: Transform {
-                translation: Vec3::new(map.start.0 as f32, map.start.1 as f32, 1.0)
-                    * Vec3::splat(12.0),
+                translation: Vec3::new(
+                    map.player_spawn_points[0].0 as f32,
+                    map.player_spawn_points[0].1 as f32,
+                    1.0,
+                ) * Vec3::splat(12.0),
                 ..Default::default()
             },
             ..Default::default()
         },
         Actor { _health: 100. },
         Player,
-        CanMove { just_moved: false },
+        Movement { just_moved: false },
     ));
+}
+
+fn spawn_enemies(mut commands: Commands, atlas: Res<SpriteAtlas>, map: Res<Map>) {
+    for point in &map.enemy_spawn_points {
+        commands.spawn((
+            SpriteSheetBundle {
+                texture_atlas: atlas.handle.clone(),
+                sprite: TextureAtlasSprite::new(SpriteIndex::Bat as usize),
+                transform: Transform {
+                    translation: Vec3::new(point.0 as f32, point.1 as f32, 1.0) * Vec3::splat(12.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            Actor { _health: 10. },
+            Enemy,
+            Movement { just_moved: false },
+        ));
+    }
 }

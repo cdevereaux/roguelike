@@ -18,7 +18,7 @@ impl Plugin for FovPlugin {
 fn reset_fov(mut map: ResMut<Map>) {
     for x in 0..map.width {
         for y in 0..map.height {
-            let tile = map.get_mut((x, y)).unwrap();
+            let tile = map.get_mut(x, y).unwrap();
             tile.view_status = match tile.view_status {
                 ViewStatus::Revealed => ViewStatus::Revealed,
                 ViewStatus::Seen => ViewStatus::Revealed,
@@ -35,7 +35,7 @@ fn update_fov(
     for (mut sprite, transform) in query.iter_mut() {
         let x = transform.translation.x as usize / 12;
         let y = transform.translation.y as usize / 12;
-        sprite.color = match map.get((x, y)).unwrap().view_status {
+        sprite.color = match map.get(x, y).unwrap().view_status {
             ViewStatus::Seen => Color::WHITE,
             ViewStatus::Revealed => Color::GRAY,
             ViewStatus::Unexplored => Color::BLACK,
@@ -116,7 +116,7 @@ fn cast_light(
             } else {
                 // Our light beam is touching this square; light it:
                 if dx * dx + dy * dy < radius_squared && x > 0 && y > 0 {
-                    if let Some(tile) = map.get_mut((x as usize, y as usize)) {
+                    if let Some(tile) = map.get_mut(x as usize, y as usize) {
                         tile.view_status = ViewStatus::Seen;
                     }
                 }
@@ -159,7 +159,7 @@ fn cast_light(
 fn is_blocked(map: &Map, x: isize, y: isize) -> bool {
     return x < 0
         || y < 0
-        || if let Some(tile) = map.get((x as usize, y as usize)) {
+        || if let Some(tile) = map.get(x as usize, y as usize) {
             !tile.passable
         } else {
             true

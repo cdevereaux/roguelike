@@ -26,9 +26,11 @@ pub struct Actor {
 }
 
 #[derive(Component)]
-pub struct CanMove {just_moved: bool}
+pub struct CanMove {
+    just_moved: bool,
+}
 
-
+#[allow(clippy::type_complexity)]
 fn center_camera(
     mut player_query: Query<(&mut CanMove, &Transform), (With<Player>, Changed<CanMove>)>,
     mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera>)>,
@@ -44,7 +46,6 @@ fn center_camera(
 }
 
 fn player_movement(
-    mut commands: Commands,
     mut player_query: Query<(&mut CanMove, &mut Transform), With<Player>>,
     map: Res<Map>,
     keyboard: Res<Input<KeyCode>>,
@@ -70,8 +71,7 @@ fn player_movement(
                 (player_transform.translation[i] as usize / 12).saturating_add_signed(delta[i])
             })
             .collect();
-        let new_index = (new_index_vec[0], new_index_vec[1]);
-        if let Some(tile) = map.get(new_index) {
+        if let Some(tile) = map.get(new_index_vec[0], new_index_vec[1]) {
             if tile.passable {
                 player_transform.translation.x += delta[0] as f32 * 12.0;
                 player_transform.translation.y += delta[1] as f32 * 12.0;
@@ -98,6 +98,6 @@ fn spawn_player(mut commands: Commands, atlas: Res<SpriteAtlas>, map: Res<Map>) 
         },
         Actor { _health: 100. },
         Player,
-        CanMove{just_moved: false}
+        CanMove { just_moved: false },
     ));
 }

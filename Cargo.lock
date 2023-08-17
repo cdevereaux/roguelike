@@ -2868,16 +2868,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mystery_dungeon"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_egui",
- "eframe",
- "rand",
-]
-
-[[package]]
 name = "naga"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3547,6 +3537,16 @@ checksum = "bdf1d4dea18dff2e9eb6dca123724f8b60ef44ad74a9ad283cdfe025df7e73fa"
 dependencies = [
  "cpal",
  "lewton",
+]
+
+[[package]]
+name = "roguelike"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_egui",
+ "eframe",
+ "rand",
 ]
 
 [[package]]

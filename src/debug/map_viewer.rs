@@ -3,8 +3,8 @@ use bevy_egui::{
     egui::{self, Ui},
     EguiContexts, EguiPlugin,
 };
-use mystery_dungeon::level_generation::map::Map;
-use mystery_dungeon::{
+use roguelike::level_generation::map::Map;
+use roguelike::{
     camera_controls::{CameraControlsPlugin, MainCamera},
     level_generation::{generators::MapGeneratorSettings, MapPlugin},
     sprite_atlas::SpriteAtlasPlugin,

@@ -138,12 +138,12 @@ impl Map {
                 if next_point == start {
                     continue;
                 }
-                if let Some(tile) = self.get(next_point) {
+                if let Some(tile) = self.get(next_point.0, next_point.1) {
                     if !tile.passable {
                         continue;
                     }
                 }
-                if self.get(next_point).is_none() {
+                if self.get(next_point.0, next_point.1).is_none() {
                     continue;
                 }
 
@@ -221,7 +221,7 @@ impl Map {
             y = y.clamp(0, Self::HEIGHT - 1);
 
             path.push((x, y));
-            if let Some(tile) = self.get_mut((x, y)) {
+            if let Some(tile) = self.get_mut(x, y) {
                 tile.passable = true;
                 tile.sprite_index = 520;
             }
@@ -250,7 +250,7 @@ impl Map {
             y = y.clamp(0, Self::HEIGHT - 1);
 
             path.push((x, y));
-            if let Some(tile) = self.get_mut((x, y)) {
+            if let Some(tile) = self.get_mut(x, y) {
                 tile.passable = true;
                 tile.sprite_index = 520;
             }
@@ -305,7 +305,7 @@ impl Map {
         });
     }
 
-    pub fn get(&self, (x, y): (usize, usize)) -> Option<&Tile> {
+    pub fn get(&self, x: usize, y: usize) -> Option<&Tile> {
         if let Some(row) = self.grid.get(y) {
             row.get(x)
         } else {
@@ -313,7 +313,7 @@ impl Map {
         }
     }
 
-    pub fn get_mut(&mut self, (x, y): (usize, usize)) -> Option<&mut Tile> {
+    pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut Tile> {
         if let Some(row) = self.grid.get_mut(y) {
             row.get_mut(x)
         } else {

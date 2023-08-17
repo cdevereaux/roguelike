@@ -29,7 +29,7 @@ fn display_map(
 
     for x in 0..map.width {
         for y in 0..map.height {
-            let sprite_index = if let Some(tile) = map.get((x, y)) {
+            let sprite_index = if let Some(tile) = map.get(x, y) {
                 tile.sprite_index
             } else {
                 2499

@@ -1,8 +1,8 @@
 [package]
-name = "mystery_dungeon"
+name = "roguelike"
 version = "0.1.0"
 edition = "2021"
-default-run = "mystery_dungeon"
+default-run = "roguelike"
 
 [[bin]]
 name = "map_viewer"

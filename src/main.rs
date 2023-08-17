@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use mystery_dungeon::{
+use roguelike::{
     actor::ActorPlugin,
     camera_controls::{CameraControlsPlugin, MainCamera},
     fov::FovPlugin,
@@ -9,7 +9,17 @@ use mystery_dungeon::{
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()).set(WindowPlugin{ primary_window: Some(Window {fit_canvas_to_parent: true, ..Default::default()}), ..Default::default()}))
+        .add_plugins(
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        fit_canvas_to_parent: true,
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+        )
         .add_plugins((
             SpriteAtlasPlugin,
             CameraControlsPlugin,

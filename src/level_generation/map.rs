@@ -5,6 +5,7 @@ use bevy::prelude::*;
 
 use rand::distributions::Distribution;
 use rand::distributions::Standard;
+use rand::seq::IteratorRandom;
 use rand::Rng;
 
 use crate::level_generation::generators::*;
@@ -62,7 +63,18 @@ pub struct Map {
     grid: Vec<Vec<Tile>>,
     pub width: usize,
     pub height: usize,
-    pub start: (usize, usize),
+    pub player_spawn_points: Vec<(usize, usize)>,
+    pub enemy_spawn_points: Vec<(usize, usize)>,
+}
+
+#[derive(Resource)]
+pub struct PlayerSpawnPoints {
+    pub points: Vec<(usize, usize)>,
+}
+
+#[derive(Resource)]
+pub struct EnemySpawnPoints {
+    pub points: Vec<(usize, usize)>,
 }
 
 impl Map {
@@ -74,7 +86,8 @@ impl Map {
             grid: vec![vec![Tile::default(); Self::WIDTH]; Self::HEIGHT],
             width: Self::WIDTH,
             height: Self::HEIGHT,
-            start: (Self::WIDTH / 2, Self::HEIGHT / 2),
+            player_spawn_points: Vec::new(),
+            enemy_spawn_points: Vec::new(),
         };
         map.generate(settings);
         map
@@ -275,6 +288,7 @@ impl Map {
         let mut caverns = vec![(self.width / 2, self.height / 2)];
         let mut rng = rand::thread_rng();
 
+        //randomly select cavern locations, within a certain distance from one another
         while caverns.len() < cavern_count {
             let (x, y) = (rng.gen_range(0..self.width), rng.gen_range(0..self.height));
             if caverns
@@ -285,13 +299,19 @@ impl Map {
             }
         }
 
+        //fill out caverns using random walks
+        let mut cavern_points = Vec::new();
         for (x0, y0) in &caverns {
-            let mut paths = Vec::new();
+            let mut points = BTreeSet::new();
             for _ in 0..walk_count {
-                paths.append(&mut self.random_walk(*x0, *y0, walk_len));
+                for point in self.random_walk(*x0, *y0, walk_len) {
+                    points.insert(point);
+                }
             }
+            cavern_points.push(points);
         }
 
+        //Connect caverns
         let origin = caverns[0];
         caverns.iter().for_each(|cavern| {
             if self.get_path(origin, *cavern).is_none() {
@@ -303,6 +323,24 @@ impl Map {
                 self.generate_connecting_tunnel(*cavern, *closest_unconnected.unwrap());
             }
         });
+
+        //Set player spawn point
+        self.player_spawn_points.push(origin);
+
+        for points in cavern_points {
+            let spawn_attempts = rng.gen_range(0..10);
+            points
+                .iter()
+                .choose_multiple(&mut rng, spawn_attempts)
+                .iter()
+                .for_each(|point| {
+                    if !self.player_spawn_points.contains(point)
+                        && !self.enemy_spawn_points.contains(point)
+                    {
+                        self.enemy_spawn_points.push(**point);
+                    }
+                })
+        }
     }
 
     pub fn get(&self, x: usize, y: usize) -> Option<&Tile> {

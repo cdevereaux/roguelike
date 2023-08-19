@@ -1,5 +1,5 @@
 use crate::{
-    actor::{Player, Enemy},
+    actor::{Enemy, Player},
     level_generation::{
         map::{Map, ViewStatus},
         MapTile,
@@ -31,7 +31,6 @@ fn reset_fov(mut map: ResMut<Map>) {
 fn update_fov(
     map: Res<Map>,
     mut query: Query<(&mut TextureAtlasSprite, &Transform), Or<(With<MapTile>, With<Enemy>)>>,
-    
 ) {
     for (mut sprite, transform) in query.iter_mut() {
         let x = transform.translation.x as usize / 12;

@@ -29,7 +29,7 @@ impl Distribution<CardinalDirection> for Standard {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum ViewStatus {
     Seen,
     Revealed,
@@ -328,7 +328,7 @@ impl Map {
         self.player_spawn_points.push(origin);
 
         for points in cavern_points {
-            let spawn_attempts = rng.gen_range(0..10);
+            let spawn_attempts = rng.gen_range(0..5);
             points
                 .iter()
                 .choose_multiple(&mut rng, spawn_attempts)

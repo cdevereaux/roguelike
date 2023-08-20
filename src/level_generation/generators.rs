@@ -16,10 +16,10 @@ pub struct CavernSettings {
 impl Default for CavernSettings {
     fn default() -> Self {
         CavernSettings {
-            cavern_count: 12,
-            max_cavern_dist: 100,
-            walk_count: 50,
-            walk_len: 25,
+            cavern_count: 6,
+            max_cavern_dist: 70,
+            walk_count: 100,
+            walk_len: 50,
         }
     }
 }

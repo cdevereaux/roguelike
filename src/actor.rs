@@ -1,8 +1,8 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
 use crate::{
-    level_generation::map::Map,
+    level_generation::map::{Map, ViewStatus},
     position::{Position, PositionDelta},
     sprite_atlas::{SpriteAtlas, SpriteIndex},
 };
@@ -21,11 +21,18 @@ impl Plugin for ActorPlugin {
             .add_systems(PostStartup, (spawn_player, spawn_enemies))
             .add_systems(
                 Update,
-                player_movement.run_if(state_exists_and_equals(TurnState::Player)),
+                clear_moved_markers.run_if(state_changed::<TurnState>()),
             )
             .add_systems(
                 Update,
-                enemy_movement.run_if(state_exists_and_equals(TurnState::Enemy)),
+                player_movement.run_if(state_exists_and_equals(TurnState::Player)),
+            )
+            .add_systems(Update, update_dormant_enemies)
+            .add_systems(
+                Update,
+                (select_next_enemy_to_move, enemy_movement)
+                    .chain()
+                    .run_if(state_exists_and_equals(TurnState::Enemy)),
             )
             .add_systems(
                 PostUpdate,
@@ -44,6 +51,15 @@ pub struct Enemy;
 pub struct Actor {
     _health: f32,
 }
+
+#[derive(Component)]
+pub struct Dormant;
+
+#[derive(Component)]
+pub struct SelectedToMove;
+
+#[derive(Component)]
+pub struct MovedThisTurn;
 
 #[derive(Component)]
 pub struct Movement {
@@ -108,57 +124,74 @@ fn player_movement(
     }
 }
 
-fn enemy_movement(
-    player_query: Query<&Position, (With<Player>, Without<Enemy>)>,
-    mut enemy_query: Query<(Entity, &mut Position), (With<Enemy>, Without<Player>)>,
-    map: Res<Map>,
+fn select_next_enemy_to_move(
+    mut commands: Commands,
+    selection_query: Query<(), With<SelectedToMove>>,
+    enemy_query: Query<Entity, (With<Enemy>, Without<MovedThisTurn>, Without<Dormant>)>,
     mut next_state: ResMut<NextState<TurnState>>,
 ) {
-    let mut rng = thread_rng();
-
-    let mut deltas = HashMap::new();
-    let mut collides = HashMap::new();
-    enemy_query.iter().for_each(|(entity, _)| {
-        deltas.insert(
-            entity,
-            PositionDelta::new(rng.gen_range(-1..=1), rng.gen_range(-1..=1)),
-        );
-        collides.insert(entity, false);
-    });
-
-    //check for any collisions between enemies
-    for [(entity1, pos1), (entity2, pos2)] in enemy_query.iter_combinations() {
-        let new_pos1 = *pos1 + *deltas.get(&entity1).unwrap();
-
-        let new_pos2 = *pos2 + *deltas.get(&entity2).unwrap();
-
-        if new_pos1 == new_pos2 || *pos1 == new_pos2 || *pos2 == new_pos1 {
-            collides.insert(entity1, true);
-            collides.insert(entity2, true);
-        }
+    if !selection_query.is_empty() {
+        return;
     }
-
-    //player collisions
-    for (entity, position) in enemy_query.iter() {
-        let new_position = *position + *deltas.get(&entity).unwrap();
-        for player_position in player_query.iter() {
-            if new_position == *player_position {
-                collides.insert(entity, true);
-            }
-        }
-    }
-
-    for (entity, mut position) in enemy_query.iter_mut() {
-        if !collides.get(&entity).unwrap() {
-            let new_position = *position + *deltas.get(&entity).unwrap();
-            if let Some(tile) = map.get(new_position.x, new_position.y) {
-                if tile.passable {
-                    *position = new_position;
-                }
-            }
-        }
+    for entity in enemy_query.iter() {
+        commands.entity(entity).insert(SelectedToMove);
+        return;
     }
     next_state.set(TurnState::Player);
+}
+
+fn enemy_movement(
+    mut commands: Commands,
+    mut target_query: Query<(Entity, &mut Position), With<SelectedToMove>>,
+    actor_query: Query<&Position, (With<Actor>, Without<SelectedToMove>)>,
+    map: Res<Map>,
+) {
+    if target_query.is_empty() {
+        return;
+    }
+    let (entity, mut current_position) = target_query.single_mut();
+    commands
+        .entity(entity)
+        .remove::<SelectedToMove>()
+        .insert(MovedThisTurn);
+
+    let mut rng = thread_rng();
+
+    //TODO: Call function to decide delta
+    let delta = PositionDelta::new(rng.gen_range(-1..=1), rng.gen_range(-1..=1));
+    let new_position = *current_position + delta;
+
+    //check for any collisions with actors
+    if actor_query
+        .iter()
+        .all(|actor_position| *actor_position != new_position)
+    {
+        if let Some(tile) = map.get(new_position.x, new_position.y) {
+            if tile.passable {
+                *current_position = new_position;
+            }
+        }
+    }
+}
+
+fn clear_moved_markers(mut commands: Commands, query: Query<Entity, With<MovedThisTurn>>) {
+    query.iter().for_each(|entity| {
+        commands.entity(entity).remove::<MovedThisTurn>();
+    });
+}
+
+fn update_dormant_enemies(
+    mut commands: Commands,
+    query: Query<(Entity, &Position), With<Dormant>>,
+    map: Res<Map>,
+) {
+    query.iter().for_each(|(entity, position)| {
+        if let Some(tile) = map.get(position.x, position.y) {
+            if tile.view_status != ViewStatus::Unexplored {
+                commands.entity(entity).remove::<Dormant>();
+            }
+        }
+    })
 }
 
 fn spawn_player(mut commands: Commands, atlas: Res<SpriteAtlas>, map: Res<Map>) {
@@ -207,6 +240,7 @@ fn spawn_enemies(mut commands: Commands, atlas: Res<SpriteAtlas>, map: Res<Map>)
             },
             Actor { _health: 10. },
             Enemy,
+            Dormant,
             Movement { just_moved: false },
             Position {
                 x: point.0,
